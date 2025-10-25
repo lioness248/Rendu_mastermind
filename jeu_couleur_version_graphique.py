@@ -32,7 +32,7 @@ GREEN = (120, 200, 120)
 ORANGE = (255, 190, 100)
 PANEL = (248, 244, 241)
 
-background = pygame.image.load("kawaii.JPG")
+background = pygame.image.load("panda_wallpaper.png")
 background = pygame.transform.scale(background, (screen_width, screen_height))
 
 
@@ -96,7 +96,7 @@ def show_end_screen(message, submessage="", color=GREEN):
 def show_menu():
     while True:
         screen.blit(background, (0, 0))
-        title = font.render("T'ES BEAU TOI AUJOURD'HUI!", True, BROWN)
+        title = font.render("T'ES BEAU TOI AUJOURD'HUI !", True, PINK)
         screen.blit(title, (screen_width // 2 - title.get_width() // 2, 300))
         play_btn = pygame.Rect(screen_width // 2 - 100, 600, 200, 80)
         draw_button("JOUER", play_btn, PINK, BROWN)
@@ -120,30 +120,51 @@ def play_game():
     tip_message = ""
     game_over = False
     victory = False
+
+    # fond kawaii
+    background = pygame.image.load("panda_wallpaper.png")
+    background = pygame.transform.scale(background, (screen_width, screen_height))
+
+    # couleurs
     color_buttons = []
+    palette_y = screen_height - 140
+    spacing = screen_width // (len(colors) + 1)
     for i, c in enumerate(colors):
-        rect = pygame.Rect(60 + i * 100, 760, 70, 70)
+        rect = pygame.Rect(spacing * (i + 1) - 35, palette_y, 70, 70)
         color_buttons.append((rect, c))
 
+    # emplacements pour les bulles 
     def current_slot_center(i):
-        return (120 + i * 90, 600)
+        start_x = (screen_width - (combo_length * 90 - 20)) // 2
+        y = screen_height // 2 + 100
+        return (start_x + i * 90, y)
 
     while not game_over:
         screen.blit(background, (0, 0))
-        title = font.render(f"Tentative {turn_count + 1}/{max_turns}", True, BROWN)
-        screen.blit(title, (screen_width // 2 - title.get_width() // 2, 30))
 
-        y_offset = 130
-        for i, attempt in enumerate(attempts[-6:]):
+        # titre 
+        title = font.render(f"TENTATIVE {turn_count + 1}/{max_turns}", True, (255, 210, 220))
+        screen.blit(title, (screen_width // 2 - title.get_width() // 2, 40))
+
+        # affichage des tentatives précédentes
+        y_offset = screen_height // 2 - 250
+        for i, attempt in enumerate(attempts[-5:]):  # max 5 dernières
+            row_x = (screen_width - (combo_length * 90 - 20)) // 2
             for j, c in enumerate(attempt):
-                pygame.draw.circle(screen, color_rgb[c], (120 + j * 90, y_offset), 25)
-            for j, status in enumerate(feedback[i]):
-                color = GREEN if status == "bien" else ORANGE
-                text = "Validée" if status == "bien" else ("À déplacer" if status == "mal" else "")
-                if text:
+                # dessin de la bulle
+                pygame.draw.circle(screen, color_rgb[c], (row_x + j * 90, y_offset), 25)
+
+                # affichage du texte de state
+                status = feedback[i][j]
+                if status:
+                    text = "Validée" if status == "bien" else "À déplacer"
+                    color = GREEN if status == "bien" else ORANGE
                     label = small_font.render(text, True, color)
-                    screen.blit(label, (90 + j * 90, y_offset + 30))
-            y_offset += 70
+                    label_x = (row_x + j * 90) - (label.get_width() // 2)
+                    label_y = y_offset + 35
+                    screen.blit(label, (label_x, label_y))
+
+            y_offset += 70  # espace entre les ligne 
 
         for i, c in enumerate(current_guess):
             center = current_slot_center(i)
@@ -152,15 +173,15 @@ def play_game():
             else:
                 pygame.draw.circle(screen, GREY, center, 35, 2)
             if selected_index == i:
-                pygame.draw.circle(screen, (255, 120, 160), center, 40, 3)
+                pygame.draw.circle(screen, (255, 150, 180), center, 40, 3)
 
         for rect, c in color_buttons:
             pygame.draw.circle(screen, color_rgb[c], rect.center, 35)
             pygame.draw.circle(screen, GREY, rect.center, 35, 2)
 
         if tip_message:
-            tip = small_font.render(tip_message, True, BROWN)
-            screen.blit(tip, (screen_width // 2 - tip.get_width() // 2, 870))
+            tip = small_font.render(tip_message, True, (100, 80, 80))
+            screen.blit(tip, (screen_width // 2 - tip.get_width() // 2, screen_height - 40))
 
         pygame.display.flip()
 
@@ -168,8 +189,10 @@ def play_game():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = event.pos
+
                 for i in range(combo_length):
                     cx, cy = current_slot_center(i)
                     dist = ((pos[0] - cx) ** 2 + (pos[1] - cy) ** 2) ** 0.5
@@ -221,12 +244,12 @@ def play_game():
                         victory = False
                         game_over = True
 
+    # fin du jeu
     if victory:
         return show_end_screen("YOUPIIIII t'as réussi !!!", color=GREEN)
     else:
         solution = " ".join(secret_combo)
-        return show_end_screen("Dommage, c'est perdu.", f"La combinaison était : {solution}", color=ORANGE)
-
+        return show_end_screen("Dommage, c'est perdu !", f"La combinaison était : [{solution}]", color=PINK)
 
 if __name__ == "__main__":
     while True:
